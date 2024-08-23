@@ -10,8 +10,6 @@ IASTBase* ASTCreator::Create()
         op->mRight = TryReadNext();
     }
 
-
-
     return nullptr;
 }
 

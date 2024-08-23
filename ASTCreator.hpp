@@ -20,14 +20,6 @@
 #include "llvm/IR/Verifier.h"
 #include <algorithm>
 
-
-class Context { 
-    std::unique_ptr<llvm::LLVMContext> TheContext;
-    std::unique_ptr<llvm::Module> TheModule;
-    std::unique_ptr<llvm::IRBuilder<>> Builder;
-    std::map<std::string, llvm::Value *> NamedValues;
-};
-
 class ASTCreator {
 public:
     IASTBase * Create();

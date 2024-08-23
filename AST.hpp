@@ -1,17 +1,6 @@
 #include <iostream>
 #include <vector>
-
-#include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/LLVMContext.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/Type.h"
-#include "llvm/IR/Verifier.h"
+#include "ASTContext.hpp"
 
 class AST {
 
@@ -30,7 +19,7 @@ public:
     };
     Type mAstType;
     std::string mDebugValue;
-    virtual void codeGen() = 0;
+    virtual llvm::Value* CodeGen(Context * ctx) = 0;
 };
 
 
@@ -38,16 +27,17 @@ class NumberAST : public IASTBase {
 private:
     bool isFloatingPoint;
     std::string value;
-    virtual void codeGen() override
+    virtual llvm::Value* CodeGen(Context * ctx) override
     {
-
+        return llvm::ConstantFP::get(*ctx->TheContext, llvm::APFloat(1.0f));
     }
 };
 class StringAST : public IASTBase { 
     std::string value;
-    virtual void codeGen() override
+    virtual llvm::Value* CodeGen(Context * ctx) override
     {
-
+        return nullptr;
+        //return llvm::ConstantFP::get(*ctx->TheContext, llvm::StringLiteral(value));
     }
 };
 
@@ -57,27 +47,27 @@ public:
     IASTBase* mLeft;
     IASTBase* mRight;
     char mOp;
-    virtual void codeGen() override
+    virtual llvm::Value* CodeGen(Context * ctx) override
     {
-        // llvm::Value *L = mLeft->codegen();
-        // llvm::Value *R = mRight->codegen();
-        // if (!L || !R)
-        //     return nullptr;
+        llvm::Value *L = mLeft->CodeGen(ctx);
+        llvm::Value *R = mRight->CodeGen(ctx);
+        if (!L || !R)
+            return nullptr;
 
-        // switch (mOp) {
-        // case '+':
-        //     return Builder->CreateFAdd(L, R, "addtmp");
-        // case '-':
-        //     return Builder->CreateFSub(L, R, "subtmp");
-        // case '*':
-        //     return Builder->CreateFMul(L, R, "multmp");
-        // case '<':
-        //     L = Builder->CreateFCmpULT(L, R, "cmptmp");
-        //     // Convert bool 0/1 to double 0.0 or 1.0
-        //     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
-        // default:
-        //     return LogErrorV("invalid binary operator");
-        // }
+        switch (mOp) {
+        case '+':
+            return ctx->Builder->CreateFAdd(L, R, "addtmp");
+        case '-':
+            return ctx->Builder->CreateFSub(L, R, "subtmp");
+        case '*':
+            return ctx->Builder->CreateFMul(L, R, "multmp");
+        case '<':
+            L = ctx->Builder->CreateFCmpULT(L, R, "cmptmp");
+            // Convert bool 0/1 to double 0.0 or 1.0
+            return ctx->Builder->CreateUIToFP(L, llvm::Type::getDoubleTy(*ctx->TheContext), "booltmp");
+        default:
+            return nullptr;
+        }
     }
 };
 

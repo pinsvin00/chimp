@@ -17,9 +17,24 @@ int main()
     yyin = fp;
     yylex();
     std::cout << __toks.size() << std::endl;
-    TokensStream tokStream(__toks);
-    ASTCreator * creator = new ASTCreator(tokStream);
-    IASTBase * ast = creator->Create();
+    // TokensStream tokStream(__toks);
+    // ASTCreator * creator = new ASTCreator(tokStream);
+    // IASTBase * ast = creator->Create();
+
+    OperatorAST * operatorAst = new OperatorAST();
+    Context* ctx = new Context();
+
+    ctx->TheContext = std::make_unique<llvm::LLVMContext>();
+    ctx->Builder = std::make_unique<llvm::IRBuilder<>>(*ctx->TheContext);
+
+    auto a = new NumberAST();
+    auto b = new NumberAST();
+
+    operatorAst->mLeft = a;
+    operatorAst->mRight = b;
+
+    auto value = operatorAst->CodeGen(ctx);
+
 }
 
 
